@@ -26,6 +26,7 @@ import donkeycar as dk
 #import parts
 from donkeycar.parts.transform import Lambda, TriggeredCallback, DelayedTrigger
 from donkeycar.parts.datastore import TubHandler
+from donkeycar.parts.PiSPImaster import SPIloopbackTest
 from donkeycar.parts.controller import LocalWebController, \
     JoystickController, WebFpv
 from donkeycar.parts.throttle_filter import ThrottleFilter
@@ -131,7 +132,10 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
             raise(Exception("Unkown camera type: %s" % cfg.CAMERA_TYPE))
             
         V.add(cam, inputs=inputs, outputs=['cam/image_array'], threaded=threaded)
-        
+
+    SPIloopbackTester = SPIloopbackTest()
+    V.add(SPIloopbackTester)
+
     if use_joystick or cfg.USE_JOYSTICK_AS_DEFAULT:
         #modify max_throttle closer to 1.0 to have more power
         #modify steering_scale lower than 1.0 to have less responsive steering
