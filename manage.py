@@ -153,9 +153,9 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
     # #   e.g. the toronado web server / VS Code sessions/ RNControl Sessions...
     # SPIloopbackTester = SPIloopbackTestV1()
     
-    # 2nd loopback test version
-    SPIloopbackTester = SPIloopbackTestV2(SPIrxBuffer, SPItxBuffer)
-    V.add(SPIloopbackTester)
+    # # 2nd loopback test version
+    # SPIloopbackTester = SPIloopbackTestV2(SPIrxBuffer, SPItxBuffer)
+    # V.add(SPIloopbackTester)
 
 
     if use_joystick or cfg.USE_JOYSTICK_AS_DEFAULT:
@@ -489,6 +489,10 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
     #Drive train setup
     if cfg.DONKEY_GYM:
         pass
+
+    elif cfg.DRIVE_TRAIN_TYPE == "SPI_2_WHEEL_DIFFERENTIAL":
+        from donkeycar.parts.PiSPImaster import SPIdriver2wheelDifferential
+        V.add(SPIdriver2wheelDifferential(SPItxBuffer), inputs=['angle', 'throttle'])        
 
     elif cfg.DRIVE_TRAIN_TYPE == "SERVO_ESC":
         if cfg.HAVE_ROBOHAT and model_path:
