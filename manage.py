@@ -26,7 +26,10 @@ import donkeycar as dk
 #import parts
 from donkeycar.parts.transform import Lambda, TriggeredCallback, DelayedTrigger
 from donkeycar.parts.datastore import TubHandler
-from donkeycar.parts.PiSPImaster import SPIloopbackTest
+from donkeycar.parts.PiSPImaster import SPImasterInterface
+from donkeycar.parts.PiSPImaster import getRxBufferValuesFromSPI
+from donkeycar.parts.PiSPImaster import setTxBufferValuesForSPI
+from donkeycar.parts.PiSPImaster import SPIloopbackTestV2
 from donkeycar.parts.controller import LocalWebController, \
     JoystickController, WebFpv
 from donkeycar.parts.throttle_filter import ThrottleFilter
@@ -133,8 +136,27 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
             
         V.add(cam, inputs=inputs, outputs=['cam/image_array'], threaded=threaded)
 
-    SPIloopbackTester = SPIloopbackTest()
+    # initialize the SPI interface
+    SPImaster = SPImasterInterface()
+
+    # add the SPImaster part here, to consistently attempt a transfer at the start of each Donkey loop, no matter what other tasks may vary in execution time
+    # note: leaving output values in Donkey 'output list' pattern style as reference, even though the current implementation doesn't use the 'output list' pattern
+    V.add(SPImaster, inputs=[],outputs=['SPI/fromSlave/TurnVelocity','SPI/fromSlave/ForwardThrottle'])
+
+    SPIrxBuffer = getRxBufferValuesFromSPI(SPImaster)
+
+    SPItxBuffer = setTxBufferValuesForSPI(SPImaster)
+
+    # # 1st loopback test version. Simply runs in context of DonkeyCar framework
+    # #   Is easy to see that this inerface should be implemented as a kernal service, and not Python.
+    # #   Other stuff (threaded tsaks?) cause the SPI interface to stretch out and ultimately fail
+    # #   e.g. the toronado web server / VS Code sessions/ RNControl Sessions...
+    # SPIloopbackTester = SPIloopbackTestV1()
+    
+    # 2nd loopback test version
+    SPIloopbackTester = SPIloopbackTestV2(SPIrxBuffer, SPItxBuffer)
     V.add(SPIloopbackTester)
+
 
     if use_joystick or cfg.USE_JOYSTICK_AS_DEFAULT:
         #modify max_throttle closer to 1.0 to have more power
