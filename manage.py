@@ -138,14 +138,12 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
 
     # initialize the SPI interface
     SPImaster = SPImasterInterface()
+    SPIrxBuffer = getRxBufferValuesFromSPI(SPImaster)   # ToDo, potentially refactor this into SPImasterInterface, or keep as-is to better isolate read-only vs. drive commands
+    SPItxBuffer = setTxBufferValuesForSPI(SPImaster)    # ToDo, potentially refactor this into SPImasterInterface, or keep as-is to better isolate read-only vs. drive commands
 
     # add the SPImaster part here, to consistently attempt a transfer at the start of each Donkey loop, no matter what other tasks may vary in execution time
     # note: leaving output values in Donkey 'output list' pattern style as reference, even though the current implementation doesn't use the 'output list' pattern
     V.add(SPImaster, inputs=[],outputs=['SPI/fromSlave/TurnVelocity','SPI/fromSlave/ForwardThrottle'])
-
-    SPIrxBuffer = getRxBufferValuesFromSPI(SPImaster)
-
-    SPItxBuffer = setTxBufferValuesForSPI(SPImaster)
 
     # # 1st loopback test version. Simply runs in context of DonkeyCar framework
     # #   Is easy to see that this inerface should be implemented as a kernal service, and not Python.
@@ -179,7 +177,7 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
     else:
         #This web controller will create a web server that is capable
         #of managing steering, throttle, and modes, and more.
-        ctr = LocalWebController(port=cfg.WEB_CONTROL_PORT, mode=cfg.WEB_INIT_MODE)
+        ctr = LocalWebController(SPIrxBuffer, port=cfg.WEB_CONTROL_PORT, mode=cfg.WEB_INIT_MODE)
 
     
     V.add(ctr, 
